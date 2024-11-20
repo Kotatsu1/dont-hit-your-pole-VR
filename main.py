@@ -12,8 +12,19 @@ UPDATE_RATE = 90
 COLOR = [1, 1, 1]
 TRANSPARENCY = 1
 DEPTH = 1
-WIDTH = 0.2
 
+
+# self.vr_system = openvr.VRSystem()
+# def get_devices(self):
+#     for device_index in range(0, openvr.k_unMaxTrackedDeviceCount):
+#         device_class = self.vr_system.getTrackedDeviceClass(device_index)
+#         if device_class == openvr.TrackedDeviceClass_Invalid:
+#             continue
+#
+#         device_name = self.vr_system.getStringTrackedDeviceProperty(device_index, openvr.Prop_ModelNumber_String)
+#         print(f"index {device_index} name {device_name}")
+#
+#     print('--------------')
 
 def mat34Id():
     matrix = HmdMatrix34_t()
@@ -28,23 +39,28 @@ class UIElement:
         self.overlay = overlayRoot
         self.overlayKey = key
         self.overlayName = name
+        self.width = 0.07
 
         self.handle = self.overlay.createOverlay(self.overlayKey, self.overlayName)
 
         self.set_image(PATH_ICON)
         self.set_color(COLOR)
         self.set_transparency(TRANSPARENCY)
-        self.overlay.setOverlayWidthInMeters(self.handle, WIDTH * DEPTH)
+        self.overlay.setOverlayWidthInMeters(self.handle, self.width * DEPTH)
         self.overlay.showOverlay(self.handle)
+
 
     def set_image(self, path: str):
         self.overlay.setOverlayFromFile(self.handle, path)
 
+
     def set_color(self, color: list):
         self.overlay.setOverlayColor(self.handle, color[0], color[1], color[2])
 
+
     def set_transparency(self, value: float):
         self.overlay.setOverlayAlpha(self.handle, value)
+
 
     def set_position(self, transform: HmdMatrix34_t):
         tracking_origin = openvr.TrackingUniverseStanding
@@ -56,6 +72,9 @@ class UIManager:
         self.overlay = IVROverlay()
         self.vr_system = openvr.VRSystem()
 
+        self.height = 40
+        self.offset = 0.035
+
         self.first = UIElement(self.overlay, "1", "1")
         self.second = UIElement(self.overlay, "2", "2")
         self.third = UIElement(self.overlay, "3", "3")
@@ -65,83 +84,49 @@ class UIManager:
         self.tracked_device_index = 1
 
 
-    def get_devices(self):
-        for device_index in range(0, openvr.k_unMaxTrackedDeviceCount):
-            device_class = self.vr_system.getTrackedDeviceClass(device_index)
-            if device_class == openvr.TrackedDeviceClass_Invalid:
-                continue
-
-            device_name = self.vr_system.getStringTrackedDeviceProperty(device_index, openvr.Prop_ModelNumber_String)
-            print(f"index {device_index} name {device_name}")
-
-        print('--------------')
-            
-
     def update(self):
         poses = self.vr_system.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, 0)
         
         if poses[self.tracked_device_index].bPoseIsValid:
             base_transform = poses[self.tracked_device_index].mDeviceToAbsoluteTracking
 
-            first_transform = deepcopy(base_transform)
-            second_transform = deepcopy(base_transform)
-            third_transform = deepcopy(base_transform)
-            fourth_transform = deepcopy(base_transform)
+            self.first.set_position(self._get_transformed_position(base_transform, direction='right'))
+            self.second.set_position(self._get_transformed_position(base_transform, direction='left'))
+            self.third.set_position(self._get_transformed_position(base_transform, direction='front'))
+            self.fourth.set_position(self._get_transformed_position(base_transform, direction='back'))
 
 
-            #right
-            first_transform[0][0] = 0
-            first_transform[0][1] = 0
-            first_transform[0][2] = 1
-            first_transform[1][0] = 0
-            first_transform[1][1] = 1
-            first_transform[1][2] = 0
-            first_transform[2][0] = -1
-            first_transform[2][1] = 0
-            first_transform[2][2] = 0
+    def _get_transformed_position(self, base_transform, direction: str):
+        transform = deepcopy(base_transform)
 
-            #left
-            second_transform[0][0] = 0
-            second_transform[0][1] = 0
-            second_transform[0][2] = -1
-            second_transform[1][0] = 0
-            second_transform[1][1] = 1
-            second_transform[1][2] = 0
-            second_transform[2][0] = 1
-            second_transform[2][1] = 0
-            second_transform[2][2] = 0
-
-            #front
-            third_transform[0][0] = 1
-            third_transform[0][1] = 0
-            third_transform[0][2] = 0
-            third_transform[1][0] = 0
-            third_transform[1][1] = 1
-            third_transform[1][2] = 0
-            third_transform[2][0] = 0
-            third_transform[2][1] = 0
-            third_transform[2][2] = 1
-
-            fourth_transform[0][0] = -1
-            fourth_transform[0][1] = 0
-            fourth_transform[0][2] = 0
-            fourth_transform[1][0] = 0
-            fourth_transform[1][1] = 1
-            fourth_transform[1][2] = 0
-            fourth_transform[2][0] = 0
-            fourth_transform[2][1] = 0
-            fourth_transform[2][2] = -1
-
-            first_transform[0][3] += 0.1
-            second_transform[0][3] -= 0.1
-            third_transform[2][3] += 0.1
-            fourth_transform[2][3] -= 0.1
+        if direction == 'right':
+            transform[0][0], transform[0][1], transform[0][2] = 0, 0, 1
+            transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
+            transform[2][0], transform[2][1], transform[2][2] = -1, 0, 0
+            transform[0][3] += self.offset
 
 
-            self.first.set_position(first_transform)
-            self.second.set_position(second_transform)
-            self.third.set_position(third_transform)
-            self.fourth.set_position(fourth_transform)
+        elif direction == 'left':
+            transform[0][0], transform[0][1], transform[0][2] = 0, 0, -1
+            transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
+            transform[2][0], transform[2][1], transform[2][2] = 1, 0, 0
+            transform[0][3] -= self.offset
+
+
+        elif direction == 'front':
+            transform[0][0], transform[0][1], transform[0][2] = 1, 0, 0
+            transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
+            transform[2][0], transform[2][1], transform[2][2] = 0, 0, 1
+            transform[2][3] += self.offset
+
+
+        elif direction == 'back':
+            transform[0][0], transform[0][1], transform[0][2] = -1, 0, 0
+            transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
+            transform[2][0], transform[2][1], transform[2][2] = 0, 0, -1
+            transform[2][3] -= self.offset
+
+        return transform
 
 
 async def main_loop(ui: UIManager):
