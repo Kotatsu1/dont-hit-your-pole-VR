@@ -8,8 +8,7 @@ from copy import deepcopy
 
 
 PATH_ICON = os.path.join(os.path.dirname(__file__), 'Untitled.png')
-print(PATH_ICON)
-UPDATE_RATE = 60
+UPDATE_RATE = 90
 COLOR = [1, 1, 1]
 TRANSPARENCY = 1
 DEPTH = 1
@@ -55,28 +54,94 @@ class UIElement:
 class UIManager:
     def __init__(self) -> None:
         self.overlay = IVROverlay()
+        self.vr_system = openvr.VRSystem()
 
         self.first = UIElement(self.overlay, "1", "1")
         self.second = UIElement(self.overlay, "2", "2")
+        self.third = UIElement(self.overlay, "3", "3")
+        self.fourth = UIElement(self.overlay, "4", "4")
 
         self.placing_object = True
         self.tracked_device_index = 1
 
+
+    def get_devices(self):
+        for device_index in range(0, openvr.k_unMaxTrackedDeviceCount):
+            device_class = self.vr_system.getTrackedDeviceClass(device_index)
+            if device_class == openvr.TrackedDeviceClass_Invalid:
+                continue
+
+            device_name = self.vr_system.getStringTrackedDeviceProperty(device_index, openvr.Prop_ModelNumber_String)
+            print(f"index {device_index} name {device_name}")
+
+        print('--------------')
+            
+
     def update(self):
-        vr_system = openvr.VRSystem()
-        poses = vr_system.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, 0)
+        poses = self.vr_system.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, 0)
         
         if poses[self.tracked_device_index].bPoseIsValid:
             base_transform = poses[self.tracked_device_index].mDeviceToAbsoluteTracking
+
             first_transform = deepcopy(base_transform)
             second_transform = deepcopy(base_transform)
-            second_transform[0][2] += 10
-            second_transform[1][2] += 10
-            second_transform[2][2] += 10
+            third_transform = deepcopy(base_transform)
+            fourth_transform = deepcopy(base_transform)
+
+
+            #right
+            first_transform[0][0] = 0
+            first_transform[0][1] = 0
+            first_transform[0][2] = 1
+            first_transform[1][0] = 0
+            first_transform[1][1] = 1
+            first_transform[1][2] = 0
+            first_transform[2][0] = -1
+            first_transform[2][1] = 0
+            first_transform[2][2] = 0
+
+            #left
+            second_transform[0][0] = 0
+            second_transform[0][1] = 0
+            second_transform[0][2] = -1
+            second_transform[1][0] = 0
+            second_transform[1][1] = 1
+            second_transform[1][2] = 0
+            second_transform[2][0] = 1
+            second_transform[2][1] = 0
+            second_transform[2][2] = 0
+
+            #front
+            third_transform[0][0] = 1
+            third_transform[0][1] = 0
+            third_transform[0][2] = 0
+            third_transform[1][0] = 0
+            third_transform[1][1] = 1
+            third_transform[1][2] = 0
+            third_transform[2][0] = 0
+            third_transform[2][1] = 0
+            third_transform[2][2] = 1
+
+            fourth_transform[0][0] = -1
+            fourth_transform[0][1] = 0
+            fourth_transform[0][2] = 0
+            fourth_transform[1][0] = 0
+            fourth_transform[1][1] = 1
+            fourth_transform[1][2] = 0
+            fourth_transform[2][0] = 0
+            fourth_transform[2][1] = 0
+            fourth_transform[2][2] = -1
+
+            first_transform[0][3] += 0.1
+            second_transform[0][3] -= 0.1
+            third_transform[2][3] += 0.1
+            fourth_transform[2][3] -= 0.1
 
 
             self.first.set_position(first_transform)
             self.second.set_position(second_transform)
+            self.third.set_position(third_transform)
+            self.fourth.set_position(fourth_transform)
 
 
 async def main_loop(ui: UIManager):
