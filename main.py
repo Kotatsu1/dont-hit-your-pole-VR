@@ -1,16 +1,17 @@
+import tkinter as tk
+from threading import Thread
 import openvr
-from openvr import HmdMatrix34_t, IVROverlay, VRApplication_Overlay
+from openvr import HmdMatrix34_t, IVROverlay, VRApplication_Overlay, VRControllerState_t
 import os
 import asyncio
 import time
-import keyboard
 from copy import deepcopy
 
 
 PATH_ICON = os.path.join(os.path.dirname(__file__), 'black_pixel.png')
 UPDATE_RATE = 60
 COLOR = [1, 1, 1]
-TRANSPARENCY = 0.5
+TRANSPARENCY = 0.6
 
 
 def mat34Id():
@@ -22,13 +23,13 @@ def mat34Id():
 
 
 class UIElement:
-    def __init__(self, overlayRoot: IVROverlay, key: str, name: str) -> None:
-        self.overlay = overlayRoot
-        self.overlayKey = key
-        self.overlayName = name
+    def __init__(self, overlay: IVROverlay, key: str, name: str) -> None:
+        self.overlay = overlay
+        self.overlay_key = key
+        self.overlay_name = name
         self.width = 0.07
 
-        self.handle = self.overlay.createOverlay(self.overlayKey, self.overlayName)
+        self.handle = self.overlay.createOverlay(self.overlay_key, self.overlay_name)
 
         self.set_image(PATH_ICON)
         self.set_color(COLOR)
@@ -68,18 +69,33 @@ class UIManager:
         self.fourth = UIElement(self.overlay, "4", "4")
 
         self.placing_object = True
-        self.tracked_device_index = 1
-        self.get_devices()
+        self.tracked_device_index = 0
+        self.get_right_controller_device_index()
 
 
-    def get_devices(self):
+    def check_trigger_press(self):
+        controller_state: VRControllerState_t = self.vr_system.getControllerState(self.tracked_device_index)[1]
+        trigger_value = controller_state.rAxis[1].x
+
+        if trigger_value > 0.5:
+            return True
+
+        return False
+
+
+    def get_right_controller_device_index(self):
         for device_index in range(0, openvr.k_unMaxTrackedDeviceCount):
             device_class = self.vr_system.getTrackedDeviceClass(device_index)
-            if device_class == openvr.TrackedDeviceClass_Invalid:
+            if device_class != openvr.TrackedDeviceClass_Controller:
                 continue
-
+            
             device_name = self.vr_system.getStringTrackedDeviceProperty(device_index, openvr.Prop_ModelNumber_String)
-            print(f"index {device_index} name {device_name}")
+            role = self.vr_system.getInt32TrackedDeviceProperty(device_index, openvr.Prop_ControllerRoleHint_Int32)
+
+            if role == openvr.TrackedControllerRole_RightHand:
+                self.tracked_device_index = device_index
+                print(f"Right hand controller found: index {device_index} name {device_name}")
+                return device_index
 
 
     def update(self):
@@ -126,26 +142,68 @@ class UIManager:
 
         return transform
 
+vr_loop_running = True
 
-async def main_loop(ui: UIManager):
-    while True:
-        startTime = time.monotonic()
+async def vr_loop(ui: UIManager):
+    global vr_loop_running
 
-        if keyboard.is_pressed('q'):
-            ui.placing_object = not ui.placing_object
+    while vr_loop_running:
+        start_time = time.monotonic()
+
+        if ui.check_trigger_press():
+            ui.placing_object = False
 
         if ui.placing_object:
             ui.update()
         
-        sleepTime = (1 / UPDATE_RATE) - (time.monotonic() - startTime)
-        if sleepTime > 0:
-            await asyncio.sleep(sleepTime)
+        sleep_time = (1 / UPDATE_RATE) - (time.monotonic() - start_time)
+        if sleep_time > 0:
+            await asyncio.sleep(sleep_time)
 
+ui = None
 
 async def init_main():
-    ui = UIManager()
-    await main_loop(ui)
+    global ui
+    ui_manager = UIManager()
+    ui = ui_manager
+    await vr_loop(ui)
+
+def on_button_click():
+    ui.placing_object = True
+
+def on_closing():
+    global vr_loop_running
+    vr_loop_running = False
+    exit()
+
+root = tk.Tk()
+root.title("Don't hit your pole!")
+root.geometry("800x600")
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
+root.configure(bg="lightblue")
+
+button = tk.Button(
+    root,
+    text="Replace Pole",
+    command=on_button_click,
+    font=("Arial", 30),
+    width=20,
+    height=3,
+    bg="orange",
+    fg="white",
+    relief="solid",
+    bd=5,
+    padx=20, pady=20
+)
+
+button.pack(padx=20, pady=40)
+
+def main_loop():
+    openvr.init(VRApplication_Overlay)
+    asyncio.run(init_main())
 
 
-openvr.init(VRApplication_Overlay)
-asyncio.run(init_main())
+th = Thread(target=main_loop)
+th.start()
+root.mainloop()
