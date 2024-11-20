@@ -8,7 +8,7 @@ openvr_dll_path = os.path.join(os.path.dirname(openvr.__file__), 'libopenvr_api_
 a = Analysis(['main.py'],
              binaries=[ (openvr_dll_path, '.' ), ],
              hiddenimports=['ctypes'],
-             datas=[('black_pixel.png', '.')],
+             datas=[('white_pixel.png', '.')],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -24,7 +24,7 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          console=True )
+          console=False )
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,

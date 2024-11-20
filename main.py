@@ -6,19 +6,59 @@ import os
 import asyncio
 import time
 from copy import deepcopy
+import json
 
 
-PATH_ICON = os.path.join(os.path.dirname(__file__), 'black_pixel.png')
+config = {
+    'transparency': 0.6,
+    'height': 60,
+    'color': [255, 255, 255],
+    'size': 0.06
+}
+
+
+def rgb_to_normalized(rgb: list):
+    return [round(x / 255.0, 1) for x in rgb]
+
+
+def config_exists():
+    config_exists = os.path.exists('config.json')
+    if config_exists:
+        return True
+
+    return False
+
+
+def create_config():
+    if not config_exists():
+        with open("config.json", "w") as f:
+            f.write(json.dumps(config))
+
+
+def find_config():
+    if config_exists():
+        global config
+        with open('config.json', 'r') as f:
+            config = json.loads(f.read())
+
+    else:
+        create_config()
+
+
+find_config()
+
+PATH_ICON = os.path.join(os.path.dirname(__file__), 'white_pixel.png')
 UPDATE_RATE = 60
-COLOR = [1, 1, 1]
-TRANSPARENCY = 0.6
+TRANSPARENCY = config['transparency']
 
 
 def mat34Id():
     matrix = HmdMatrix34_t()
+
     matrix[0][0] = 1
     matrix[1][1] = 1
     matrix[2][2] = 1
+
     return matrix
 
 
@@ -27,12 +67,13 @@ class UIElement:
         self.overlay = overlay
         self.overlay_key = key
         self.overlay_name = name
-        self.width = 0.07
+        self.width = config['size']
+        self.color = rgb_to_normalized(config['color'])
 
         self.handle = self.overlay.createOverlay(self.overlay_key, self.overlay_name)
 
         self.set_image(PATH_ICON)
-        self.set_color(COLOR)
+        self.set_color(self.color)
         self.set_transparency(TRANSPARENCY)
         self.overlay.setOverlayWidthInMeters(self.handle, self.width)
         self.overlay.showOverlay(self.handle)
@@ -60,8 +101,8 @@ class UIManager:
         self.overlay = IVROverlay()
         self.vr_system = openvr.VRSystem()
 
-        self.height = 40
-        self.offset = 0.035
+        self.height = config['height']
+        self.offset = config['size'] / 2
 
         self.first = UIElement(self.overlay, "1", "1")
         self.second = UIElement(self.overlay, "2", "2")
@@ -168,15 +209,18 @@ async def init_main():
     ui = ui_manager
     await vr_loop(ui)
 
-def on_button_click():
-    ui.placing_object = True
+
+root = tk.Tk()
 
 def on_closing():
     global vr_loop_running
     vr_loop_running = False
+    root.quit()
     exit()
 
-root = tk.Tk()
+def on_button_click():
+    ui.placing_object = True
+
 root.title("Don't hit your pole!")
 root.geometry("800x600")
 root.protocol("WM_DELETE_WINDOW", on_closing)
