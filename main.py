@@ -7,24 +7,11 @@ import keyboard
 from copy import deepcopy
 
 
-PATH_ICON = os.path.join(os.path.dirname(__file__), 'Untitled.png')
-UPDATE_RATE = 90
+PATH_ICON = os.path.join(os.path.dirname(__file__), 'black_pixel.png')
+UPDATE_RATE = 60
 COLOR = [1, 1, 1]
-TRANSPARENCY = 1
-DEPTH = 1
+TRANSPARENCY = 0.5
 
-
-# self.vr_system = openvr.VRSystem()
-# def get_devices(self):
-#     for device_index in range(0, openvr.k_unMaxTrackedDeviceCount):
-#         device_class = self.vr_system.getTrackedDeviceClass(device_index)
-#         if device_class == openvr.TrackedDeviceClass_Invalid:
-#             continue
-#
-#         device_name = self.vr_system.getStringTrackedDeviceProperty(device_index, openvr.Prop_ModelNumber_String)
-#         print(f"index {device_index} name {device_name}")
-#
-#     print('--------------')
 
 def mat34Id():
     matrix = HmdMatrix34_t()
@@ -46,7 +33,7 @@ class UIElement:
         self.set_image(PATH_ICON)
         self.set_color(COLOR)
         self.set_transparency(TRANSPARENCY)
-        self.overlay.setOverlayWidthInMeters(self.handle, self.width * DEPTH)
+        self.overlay.setOverlayWidthInMeters(self.handle, self.width)
         self.overlay.showOverlay(self.handle)
 
 
@@ -82,6 +69,17 @@ class UIManager:
 
         self.placing_object = True
         self.tracked_device_index = 1
+        self.get_devices()
+
+
+    def get_devices(self):
+        for device_index in range(0, openvr.k_unMaxTrackedDeviceCount):
+            device_class = self.vr_system.getTrackedDeviceClass(device_index)
+            if device_class == openvr.TrackedDeviceClass_Invalid:
+                continue
+
+            device_name = self.vr_system.getStringTrackedDeviceProperty(device_index, openvr.Prop_ModelNumber_String)
+            print(f"index {device_index} name {device_name}")
 
 
     def update(self):
