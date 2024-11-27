@@ -47,7 +47,7 @@ def find_config():
 
 find_config()
 
-PATH_ICON = os.path.join(os.path.dirname(__file__), 'white_pixel.png')
+PATH_ICON = os.path.join(os.path.dirname(__file__), 'texture.png')
 UPDATE_RATE = 60
 TRANSPARENCY = config['transparency']
 
@@ -102,12 +102,12 @@ class UIManager:
         self.vr_system = openvr.VRSystem()
 
         self.height = config['height']
-        self.offset = config['size'] / 2
+
+        # that's literally a magic number, don't even ask me what's that, but surely no one will read this code
+        self.offset = config['size'] * 0.315
 
         self.first = UIElement(self.overlay, "1", "1")
         self.second = UIElement(self.overlay, "2", "2")
-        self.third = UIElement(self.overlay, "3", "3")
-        self.fourth = UIElement(self.overlay, "4", "4")
 
         self.placing_object = True
         self.tracked_device_index = 0
@@ -145,10 +145,13 @@ class UIManager:
         if poses[self.tracked_device_index].bPoseIsValid:
             base_transform = poses[self.tracked_device_index].mDeviceToAbsoluteTracking
 
+            # will be used to find distance to pole from hmd
+            # transform[1][3] += .1 #z
+            # transform[0][3] += .1 #x
+            # transform[2][3] += .1 #y
+
             self.first.set_position(self._get_transformed_position(base_transform, direction='right'))
             self.second.set_position(self._get_transformed_position(base_transform, direction='left'))
-            self.third.set_position(self._get_transformed_position(base_transform, direction='front'))
-            self.fourth.set_position(self._get_transformed_position(base_transform, direction='back'))
 
 
     def _get_transformed_position(self, base_transform, direction: str):
@@ -158,28 +161,16 @@ class UIManager:
             transform[0][0], transform[0][1], transform[0][2] = 0, 0, 1
             transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
             transform[2][0], transform[2][1], transform[2][2] = -1, 0, 0
-            transform[0][3] += self.offset
+            self.first.overlay.setOverlayCurvature(self.first.handle, 1)
 
 
         elif direction == 'left':
             transform[0][0], transform[0][1], transform[0][2] = 0, 0, -1
             transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
             transform[2][0], transform[2][1], transform[2][2] = 1, 0, 0
-            transform[0][3] -= self.offset
 
-
-        elif direction == 'front':
-            transform[0][0], transform[0][1], transform[0][2] = 1, 0, 0
-            transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
-            transform[2][0], transform[2][1], transform[2][2] = 0, 0, 1
-            transform[2][3] += self.offset
-
-
-        elif direction == 'back':
-            transform[0][0], transform[0][1], transform[0][2] = -1, 0, 0
-            transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
-            transform[2][0], transform[2][1], transform[2][2] = 0, 0, -1
-            transform[2][3] -= self.offset
+            transform[0][3] += self.offset
+            self.second.overlay.setOverlayCurvature(self.second.handle, 1)
 
         return transform
 
