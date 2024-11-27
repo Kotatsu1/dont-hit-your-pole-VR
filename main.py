@@ -7,6 +7,7 @@ import asyncio
 import time
 from copy import deepcopy
 import json
+import math
 
 
 config = {
@@ -76,6 +77,7 @@ class UIElement:
         self.set_color(self.color)
         self.set_transparency(TRANSPARENCY)
         self.overlay.setOverlayWidthInMeters(self.handle, self.width)
+        self.overlay.setOverlayCurvature(self.handle, 1)
         self.overlay.showOverlay(self.handle)
 
 
@@ -102,9 +104,7 @@ class UIManager:
         self.vr_system = openvr.VRSystem()
 
         self.height = config['height']
-
-        # that's literally a magic number, don't even ask me what's that, but surely no one will read this code
-        self.offset = config['size'] * 0.315
+        self.offset = config['size'] / math.pi
 
         self.first = UIElement(self.overlay, "1", "1")
         self.second = UIElement(self.overlay, "2", "2")
@@ -161,7 +161,6 @@ class UIManager:
             transform[0][0], transform[0][1], transform[0][2] = 0, 0, 1
             transform[1][0], transform[1][1], transform[1][2] = 0, 1 + self.height, 0
             transform[2][0], transform[2][1], transform[2][2] = -1, 0, 0
-            self.first.overlay.setOverlayCurvature(self.first.handle, 1)
 
 
         elif direction == 'left':
@@ -170,7 +169,6 @@ class UIManager:
             transform[2][0], transform[2][1], transform[2][2] = 1, 0, 0
 
             transform[0][3] += self.offset
-            self.second.overlay.setOverlayCurvature(self.second.handle, 1)
 
         return transform
 
