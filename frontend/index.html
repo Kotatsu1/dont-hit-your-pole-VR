@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VR Pole Offset Controller</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Poppins:400,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css">
+    <script src="index.js"></script>
+  </head>
+  <body>
+    <div class="card">
+      <h1>VR Pole Offset Controller</h1>
+      <div class="axis-section">
+        <div class="axis-header">
+          <h2>Axis X</h2>
+          <div id="x-value" class="axis-value">0.000000</div>
+        </div>
+        <div class="buttons-container">
+          <div class="button-column">
+            <button class="negative" onclick="updateValue('x', -0.001)">-0.001</button>
+            <button class="negative" onclick="updateValue('x', -0.01)">-0.01</button>
+            <button class="negative" onclick="updateValue('x', -0.1)">-0.1</button>
+            <button class="negative" onclick="updateValue('x', -1)">-1</button>
+          </div>
+          <div class="button-column">
+            <button class="positive" onclick="updateValue('x', 0.001)">+0.001</button>
+            <button class="positive" onclick="updateValue('x', 0.01)">+0.01</button>
+            <button class="positive" onclick="updateValue('x', 0.1)">+0.1</button>
+            <button class="positive" onclick="updateValue('x', 1)">+1</button>
+          </div>
+        </div>
+      </div>
+      <div class="axis-section">
+        <div class="axis-header">
+          <h2>Axis Y</h2>
+          <div id="y-value" class="axis-value">0.000000</div>
+        </div>
+        <div class="buttons-container">
+          <div class="button-column">
+            <button class="negative" onclick="updateValue('y', -0.001)">-0.001</button>
+            <button class="negative" onclick="updateValue('y', -0.01)">-0.01</button>
+            <button class="negative" onclick="updateValue('y', -0.1)">-0.1</button>
+            <button class="negative" onclick="updateValue('y', -1)">-1</button>
+          </div>
+          <div class="button-column">
+            <button class="positive" onclick="updateValue('y', 0.001)">+0.001</button>
+            <button class="positive" onclick="updateValue('y', 0.01)">+0.01</button>
+            <button class="positive" onclick="updateValue('y', 0.1)">+0.1</button>
+            <button class="positive" onclick="updateValue('y', 1)">+1</button>
+          </div>
+        </div>
+      </div>
+      <div class="axis-section">
+        <div class="axis-header">
+          <h2>Axis Z</h2>
+          <div id="z-value" class="axis-value">0.000000</div>
+        </div>
+        <div class="buttons-container">
+          <div class="button-column">
+            <button class="negative" onclick="updateValue('z', -0.001)">-0.001</button>
+            <button class="negative" onclick="updateValue('z', -0.01)">-0.01</button>
+            <button class="negative" onclick="updateValue('z', -0.1)">-0.1</button>
+            <button class="negative" onclick="updateValue('z', -1)">-1</button>
+          </div>
+          <div class="button-column">
+            <button class="positive" onclick="updateValue('z', 0.001)">+0.001</button>
+            <button class="positive" onclick="updateValue('z', 0.01)">+0.01</button>
+            <button class="positive" onclick="updateValue('z', 0.1)">+0.1</button>
+            <button class="positive" onclick="updateValue('z', 1)">+1</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button onclick="saveConfig()">Save config</button>
+  </body>
+</html>
